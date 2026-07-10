@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -37,3 +37,12 @@ jobs:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Record deployment result
+        if: always()
+        run: |
+          printf '{"status":"%s","url":"%s","commit":"%s"}\n' "${{ job.status }}" "${{ steps.deployment.outputs.page_url }}" "${{ github.sha }}" > shaderpost-deploy-status.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add shaderpost-deploy-status.json
+          git commit -m "Record ShaderPost deployment result" || exit 0
+          git push
